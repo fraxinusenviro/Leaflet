@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leaflet RGB Image Segmentation</title>
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+    />
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-VF8F6pwM9n9v+1IYjoJuxseM8nUqHS8wnRZ8Zk0k0nE="
+        crossorigin=""
+    ></script>
+    <style>
+        :root {
+            color-scheme: light dark;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f4f6fb;
+            color: #1f2933;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        h1 {
+            margin: 0.5rem 0 0;
+            font-size: clamp(1.6rem, 2vw + 1rem, 2.6rem);
+            color: #0b7285;
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+
+        main {
+            width: min(1100px, 94vw);
+            margin: 0 auto 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1rem;
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.15);
+            padding: clamp(1rem, 2vw, 1.5rem);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        label {
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            color: #0f172a;
+        }
+
+        input[type="file"],
+        input[type="number"],
+        input[type="range"],
+        button,
+        select {
+            font: inherit;
+        }
+
+        input[type="file"] {
+            padding: 0.5rem;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            border-radius: 0.6rem;
+            background: rgba(241, 245, 249, 0.7);
+        }
+
+        input[type="range"] {
+            accent-color: #0b7285;
+        }
+
+        button {
+            padding: 0.65rem 1rem;
+            border-radius: 0.75rem;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, #0b7285, #18c0d6);
+            color: white;
+            box-shadow: 0 8px 20px rgba(15, 118, 110, 0.25);
+            transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            background: linear-gradient(135deg, #64748b, #94a3b8);
+            box-shadow: none;
+            filter: grayscale(0.2);
+        }
+
+        button:not(:disabled):hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 24px rgba(15, 118, 110, 0.28);
+        }
+
+        .map-wrapper {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.15);
+        }
+
+        #map {
+            width: 100%;
+            height: clamp(400px, 65vh, 720px);
+            background: #e2e8f0;
+        }
+
+        #status {
+            min-height: 1.2rem;
+            font-size: 0.95rem;
+            color: #0f172a;
+        }
+
+        #legend {
+            display: grid;
+            gap: 0.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.65rem;
+            border-radius: 0.75rem;
+            background: rgba(15, 118, 110, 0.07);
+        }
+
+        .swatch {
+            width: 1.8rem;
+            height: 1.8rem;
+            border-radius: 0.4rem;
+            border: 1px solid rgba(15, 23, 42, 0.2);
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .legend-text {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            font-size: 0.92rem;
+        }
+
+        .legend-text span:first-child {
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .description {
+            font-size: 0.95rem;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 680px) {
+            body {
+                gap: 0.5rem;
+            }
+
+            #map {
+                height: clamp(320px, 60vh, 620px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Leaflet RGB Image Segmentation</h1>
+    <main>
+        <section class="panel description">
+            <p>
+                Upload an RGB image and run K-means segmentation directly in the browser. The image is projected
+                on a Leaflet map using the <code>CRS.Simple</code> coordinate system so you can pan, zoom, and
+                toggle layers. Tune the number of segments and the processing resolution to find the balance between
+                detail and performance that fits your workflow.
+            </p>
+        </section>
+
+        <section class="panel">
+            <div class="control-grid">
+                <label>
+                    Choose image
+                    <input type="file" id="imageInput" accept="image/*" />
+                </label>
+
+                <label>
+                    Segments: <span id="segmentsLabel">4</span>
+                    <input type="range" id="segments" min="2" max="12" step="1" value="4" />
+                </label>
+
+                <label>
+                    Max processing size: <span id="sizeLabel">768 px</span>
+                    <input type="range" id="maxSize" min="256" max="2048" step="128" value="768" />
+                </label>
+
+                <label>
+                    Segmentation overlay opacity: <span id="opacityLabel">70%</span>
+                    <input type="range" id="overlayOpacity" min="20" max="100" step="5" value="70" />
+                </label>
+            </div>
+
+            <div class="control-grid">
+                <button id="segmentBtn" disabled>Segment image</button>
+                <button id="resetBtn">Reset map</button>
+            </div>
+
+            <div id="status">Load an image to begin.</div>
+        </section>
+
+        <section class="map-wrapper">
+            <div id="map"></div>
+        </section>
+
+        <section class="panel">
+            <h2 style="margin: 0; font-size: 1.2rem; color: #0b7285;">Segment palette</h2>
+            <div id="legend">No segments yet.</div>
+        </section>
+    </main>
+
+    <script>
+        const map = L.map("map", {
+            crs: L.CRS.Simple,
+            zoomSnap: 0.25,
+            wheelPxPerZoomLevel: 90,
+            minZoom: -5,
+        });
+
+        const emptyBounds = L.latLngBounds([
+            [0, 0],
+            [512, 512],
+        ]);
+        map.fitBounds(emptyBounds);
+
+        let layerControl = L.control.layers({}, {}, { collapsed: false }).addTo(map);
+        let originalLayer = null;
+        let segmentationLayer = null;
+
+        const imageInput = document.getElementById("imageInput");
+        const segmentBtn = document.getElementById("segmentBtn");
+        const resetBtn = document.getElementById("resetBtn");
+        const statusEl = document.getElementById("status");
+        const legendEl = document.getElementById("legend");
+        const segmentsRange = document.getElementById("segments");
+        const segmentsLabel = document.getElementById("segmentsLabel");
+        const maxSizeRange = document.getElementById("maxSize");
+        const sizeLabel = document.getElementById("sizeLabel");
+        const overlayOpacityRange = document.getElementById("overlayOpacity");
+        const overlayOpacityLabel = document.getElementById("opacityLabel");
+
+        segmentsRange.addEventListener("input", () => {
+            segmentsLabel.textContent = segmentsRange.value;
+        });
+
+        maxSizeRange.addEventListener("input", () => {
+            sizeLabel.textContent = `${maxSizeRange.value} px`;
+        });
+
+        overlayOpacityRange.addEventListener("input", () => {
+            overlayOpacityLabel.textContent = `${overlayOpacityRange.value}%`;
+            if (segmentationLayer) {
+                segmentationLayer.setOpacity(overlayOpacityRange.value / 100);
+            }
+        });
+
+        const workingCanvas = document.createElement("canvas");
+        const workingCtx = workingCanvas.getContext("2d");
+
+        const outputCanvas = document.createElement("canvas");
+        const outputCtx = outputCanvas.getContext("2d");
+
+        let workingWidth = 0;
+        let workingHeight = 0;
+        let originalDataUrl = null;
+
+        function resetLayers() {
+            if (originalLayer) {
+                map.removeLayer(originalLayer);
+                originalLayer = null;
+            }
+            if (segmentationLayer) {
+                map.removeLayer(segmentationLayer);
+                segmentationLayer = null;
+            }
+            if (layerControl) {
+                layerControl.remove();
+            }
+            layerControl = L.control.layers({}, {}, { collapsed: false }).addTo(map);
+        }
+
+        function handleImageLoad(image) {
+            const maxSize = parseInt(maxSizeRange.value, 10);
+            const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+            workingWidth = Math.round(image.width * scale);
+            workingHeight = Math.round(image.height * scale);
+
+            workingCanvas.width = workingWidth;
+            workingCanvas.height = workingHeight;
+            workingCtx.clearRect(0, 0, workingWidth, workingHeight);
+            workingCtx.drawImage(image, 0, 0, workingWidth, workingHeight);
+            originalDataUrl = workingCanvas.toDataURL("image/png");
+
+            statusEl.textContent = `Image loaded (${image.width} × ${image.height} → ${workingWidth} × ${workingHeight}). Ready to segment.`;
+            segmentBtn.disabled = false;
+
+            applyOriginalLayer();
+        }
+
+        function applyOriginalLayer() {
+            if (!originalDataUrl) {
+                return;
+            }
+
+            const bounds = L.latLngBounds([
+                [0, 0],
+                [workingHeight, workingWidth],
+            ]);
+
+            resetLayers();
+            originalLayer = L.imageOverlay(originalDataUrl, bounds, { opacity: 1 });
+            originalLayer.addTo(map);
+
+            layerControl.addOverlay(originalLayer, "Original image");
+            map.fitBounds(bounds.pad(0.05));
+        }
+
+        imageInput.addEventListener("change", (event) => {
+            const file = event.target.files?.[0];
+            if (!file) {
+                statusEl.textContent = "No image selected.";
+                segmentBtn.disabled = true;
+                return;
+            }
+
+            if (!file.type.startsWith("image/")) {
+                statusEl.textContent = "Please select a valid image file.";
+                segmentBtn.disabled = true;
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const image = new Image();
+                image.onload = () => handleImageLoad(image);
+                image.onerror = () => {
+                    statusEl.textContent = "Could not load the image. Please try a different file.";
+                    segmentBtn.disabled = true;
+                };
+                image.src = e.target?.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        resetBtn.addEventListener("click", () => {
+            imageInput.value = "";
+            workingCanvas.width = workingCanvas.height = 0;
+            outputCanvas.width = outputCanvas.height = 0;
+            workingWidth = workingHeight = 0;
+            originalDataUrl = null;
+            legendEl.innerHTML = "No segments yet.";
+            overlayOpacityRange.value = 70;
+            overlayOpacityLabel.textContent = "70%";
+            resetLayers();
+            statusEl.textContent = "Cleared. Load an image to begin.";
+            segmentBtn.disabled = true;
+            map.fitBounds(emptyBounds);
+        });
+
+        segmentBtn.addEventListener("click", async () => {
+            if (!workingWidth || !workingHeight) {
+                statusEl.textContent = "Load an image before running segmentation.";
+                return;
+            }
+
+            const k = parseInt(segmentsRange.value, 10);
+            statusEl.textContent = `Segmenting with ${k} clusters…`;
+            segmentBtn.disabled = true;
+
+            await new Promise((resolve) => setTimeout(resolve, 20));
+
+            try {
+                const startTime = performance.now();
+                const { data } = workingCtx.getImageData(0, 0, workingWidth, workingHeight);
+                const segmentation = kMeansSegmentation(data, workingWidth, workingHeight, k);
+                const endTime = performance.now();
+
+                renderSegmentation(segmentation, k);
+                const elapsed = ((endTime - startTime) / 1000).toFixed(2);
+                statusEl.textContent = `Segmentation finished in ${elapsed}s with ${k} clusters.`;
+            } catch (error) {
+                console.error(error);
+                statusEl.textContent = `Segmentation failed: ${error.message}`;
+            } finally {
+                segmentBtn.disabled = false;
+            }
+        });
+
+        function kMeansSegmentation(imageData, width, height, k) {
+            const pixelCount = width * height;
+            const pixels = new Float32Array(pixelCount * 3);
+            for (let i = 0, j = 0; i < imageData.length; i += 4, j += 3) {
+                pixels[j] = imageData[i];
+                pixels[j + 1] = imageData[i + 1];
+                pixels[j + 2] = imageData[i + 2];
+            }
+
+            const centroids = initialiseCentroids(pixels, pixelCount, k);
+            const assignments = new Uint8Array(pixelCount);
+            const sums = new Float64Array(k * 4);
+
+            let iterations = 0;
+            let moved = true;
+
+            while (iterations < 20 && moved) {
+                moved = assignPixels(pixels, centroids, assignments, k, sums);
+                moved = recomputeCentroids(pixels, centroids, assignments, k, sums) || moved;
+                iterations += 1;
+            }
+
+            return { centroids, assignments, width, height };
+        }
+
+        function initialiseCentroids(pixels, pixelCount, k) {
+            const centroids = new Float64Array(k * 3);
+            const used = new Set();
+            for (let i = 0; i < k; i += 1) {
+                let idx;
+                do {
+                    idx = Math.floor(Math.random() * pixelCount);
+                } while (used.has(idx));
+                used.add(idx);
+                const p = idx * 3;
+                centroids[i * 3] = pixels[p];
+                centroids[i * 3 + 1] = pixels[p + 1];
+                centroids[i * 3 + 2] = pixels[p + 2];
+            }
+            return centroids;
+        }
+
+        function assignPixels(pixels, centroids, assignments, k, sums) {
+            const pixelCount = assignments.length;
+            sums.fill(0);
+            let changed = false;
+
+            for (let idx = 0, pixelIndex = 0; idx < pixelCount; idx += 1, pixelIndex += 3) {
+                let bestCluster = 0;
+                let bestDistance = Infinity;
+                for (let cluster = 0; cluster < k; cluster += 1) {
+                    const centroidIndex = cluster * 3;
+                    const dr = pixels[pixelIndex] - centroids[centroidIndex];
+                    const dg = pixels[pixelIndex + 1] - centroids[centroidIndex + 1];
+                    const db = pixels[pixelIndex + 2] - centroids[centroidIndex + 2];
+                    const distance = dr * dr + dg * dg + db * db;
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        bestCluster = cluster;
+                    }
+                }
+                if (assignments[idx] !== bestCluster) {
+                    assignments[idx] = bestCluster;
+                    changed = true;
+                }
+                const sumIndex = bestCluster * 4;
+                sums[sumIndex] += pixels[pixelIndex];
+                sums[sumIndex + 1] += pixels[pixelIndex + 1];
+                sums[sumIndex + 2] += pixels[pixelIndex + 2];
+                sums[sumIndex + 3] += 1;
+            }
+            return changed;
+        }
+
+        function recomputeCentroids(pixels, centroids, assignments, k, sums) {
+            let moved = false;
+            for (let cluster = 0; cluster < k; cluster += 1) {
+                const base = cluster * 3;
+                const sumIndex = cluster * 4;
+                const count = sums[sumIndex + 3];
+
+                if (!count) {
+                    const randomPixel = Math.floor(Math.random() * assignments.length) * 3;
+                    centroids[base] = pixels[randomPixel];
+                    centroids[base + 1] = pixels[randomPixel + 1];
+                    centroids[base + 2] = pixels[randomPixel + 2];
+                    moved = true;
+                    continue;
+                }
+
+                const newR = sums[sumIndex] / count;
+                const newG = sums[sumIndex + 1] / count;
+                const newB = sums[sumIndex + 2] / count;
+
+                if (
+                    Math.abs(newR - centroids[base]) > 0.5 ||
+                    Math.abs(newG - centroids[base + 1]) > 0.5 ||
+                    Math.abs(newB - centroids[base + 2]) > 0.5
+                ) {
+                    moved = true;
+                }
+
+                centroids[base] = newR;
+                centroids[base + 1] = newG;
+                centroids[base + 2] = newB;
+            }
+            return moved;
+        }
+
+        function renderSegmentation(segmentation, k) {
+            const { centroids, assignments, width, height } = segmentation;
+            resetLayers();
+            outputCanvas.width = width;
+            outputCanvas.height = height;
+            const imageData = outputCtx.createImageData(width, height);
+            const counts = new Uint32Array(k);
+
+            for (let i = 0, j = 0; i < assignments.length; i += 1, j += 4) {
+                const cluster = assignments[i];
+                const centroidIndex = cluster * 3;
+                imageData.data[j] = Math.round(centroids[centroidIndex]);
+                imageData.data[j + 1] = Math.round(centroids[centroidIndex + 1]);
+                imageData.data[j + 2] = Math.round(centroids[centroidIndex + 2]);
+                imageData.data[j + 3] = 255;
+                counts[cluster] += 1;
+            }
+
+            outputCtx.putImageData(imageData, 0, 0);
+            const segmentationUrl = outputCanvas.toDataURL("image/png");
+
+            const bounds = L.latLngBounds([
+                [0, 0],
+                [height, width],
+            ]);
+
+            originalLayer = L.imageOverlay(originalDataUrl, bounds, { opacity: 1 });
+            segmentationLayer = L.imageOverlay(segmentationUrl, bounds, {
+                opacity: overlayOpacityRange.value / 100,
+            });
+
+            originalLayer.addTo(map);
+            segmentationLayer.addTo(map);
+            layerControl.addOverlay(originalLayer, "Original image");
+            layerControl.addOverlay(segmentationLayer, `Segmentation (${k} clusters)`);
+            map.fitBounds(bounds.pad(0.05));
+
+            updateLegend(centroids, counts, assignments.length);
+        }
+
+        function rgbToHex(r, g, b) {
+            return `#${[r, g, b]
+                .map((val) => {
+                    const hex = Math.round(val).toString(16);
+                    return hex.length === 1 ? `0${hex}` : hex;
+                })
+                .join("")}`;
+        }
+
+        function getAccessibleTextColor(r, g, b) {
+            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+            return luminance > 160 ? "#111" : "#f8fafc";
+        }
+
+        function updateLegend(centroids, counts, total) {
+            legendEl.innerHTML = "";
+            if (!total) {
+                legendEl.textContent = "No segments yet.";
+                return;
+            }
+
+            const sortedIndices = Array.from({ length: counts.length }, (_, idx) => idx).sort(
+                (a, b) => counts[b] - counts[a]
+            );
+
+            sortedIndices.forEach((cluster) => {
+                const base = cluster * 3;
+                const r = centroids[base];
+                const g = centroids[base + 1];
+                const b = centroids[base + 2];
+                const hex = rgbToHex(r, g, b);
+                const percentage = ((counts[cluster] / total) * 100).toFixed(1);
+
+                const item = document.createElement("div");
+                item.className = "legend-item";
+
+                const swatch = document.createElement("div");
+                swatch.className = "swatch";
+                swatch.style.backgroundColor = hex;
+                swatch.style.color = getAccessibleTextColor(r, g, b);
+                swatch.textContent = `${percentage}%`;
+
+                const text = document.createElement("div");
+                text.className = "legend-text";
+                const label = document.createElement("span");
+                label.textContent = `Cluster ${cluster + 1}`;
+                const details = document.createElement("span");
+                details.textContent = `${hex.toUpperCase()} · ${counts[cluster].toLocaleString()} pixels`;
+
+                text.appendChild(label);
+                text.appendChild(details);
+
+                item.appendChild(swatch);
+                item.appendChild(text);
+                legendEl.appendChild(item);
+            });
+        }
+    </script>
+</body>
+</html>
