@@ -1,0 +1,189 @@
+:root {
+  --panel-bg: rgba(255, 255, 255, 0.95);
+  --text: #1f2937;
+  --primary: #0d6efd;
+  --danger: #c62828;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app,
+#map {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: var(--text);
+}
+
+#map {
+  touch-action: none;
+}
+
+.toolbar-toggle {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 1200;
+  padding: 0.5rem 0.8rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  font-size: 1rem;
+}
+
+.toolbar {
+  position: fixed;
+  z-index: 1100;
+  top: 58px;
+  left: 12px;
+  width: min(330px, calc(100vw - 24px));
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  background: var(--panel-bg);
+  border-radius: 10px;
+  box-shadow: 0 5px 24px rgba(0, 0, 0, 0.18);
+  padding: 0.8rem;
+}
+
+.toolbar.collapsed {
+  display: none;
+}
+
+.toolbar h1 {
+  margin: 0 0 0.8rem;
+  font-size: 1.1rem;
+}
+
+.toolbar h2 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.toolbar section {
+  border-top: 1px solid #dbe3ee;
+  padding-top: 0.7rem;
+  margin-top: 0.7rem;
+}
+
+label,
+button,
+select,
+input,
+textarea {
+  font-size: 0.92rem;
+}
+
+input,
+select,
+textarea,
+button {
+  width: 100%;
+  margin-top: 0.2rem;
+  margin-bottom: 0.45rem;
+  border-radius: 6px;
+  border: 1px solid #b8c4d8;
+  padding: 0.5rem;
+}
+
+button {
+  background: #edf2fa;
+}
+
+button:hover {
+  cursor: pointer;
+  background: #dde8fb;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button.danger {
+  color: #fff;
+  background: var(--danger);
+  border-color: #8e1e1e;
+}
+
+.gps-actions,
+.import-export {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.gps-settings {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.3rem;
+}
+
+.inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inline input {
+  width: auto;
+  margin: 0;
+}
+
+.hint {
+  margin: 0.2rem 0;
+  color: #4b5563;
+  font-size: 0.82rem;
+}
+
+.file-input-label {
+  display: inline-block;
+  background: #edf2fa;
+  border: 1px solid #b8c4d8;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.file-input-label input {
+  display: block;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  border: none;
+}
+
+.status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(17, 24, 39, 0.88);
+  color: #f9fafb;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.88rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+@media (min-width: 900px) {
+  .toolbar {
+    display: block;
+  }
+
+  .toolbar-toggle {
+    display: none;
+  }
+}
