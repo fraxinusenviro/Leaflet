@@ -10,8 +10,6 @@
 </head>
 <body>
   <div id="app">
-    <button id="toolbarToggle" class="toolbar-toggle" aria-expanded="false" aria-controls="toolbar">☰ Tools</button>
-
     <aside id="toolbar" class="toolbar collapsed">
       <h1>Field Mapper</h1>
 
@@ -27,20 +25,22 @@
       </section>
 
       <section>
+        <h2>Layer Styling</h2>
+        <label>Stroke color<input type="color" id="strokeColor" value="#0b57d0" /></label>
+        <label>Fill color<input type="color" id="fillColor" value="#4f8cff" /></label>
+        <label>Stroke width<input type="number" id="strokeWidth" min="1" max="12" step="1" value="3" /></label>
+        <label>Fill opacity<input type="number" id="fillOpacity" min="0" max="1" step="0.05" value="0.2" /></label>
+        <label>Point radius<input type="number" id="pointRadius" min="2" max="20" step="1" value="7" /></label>
+        <button id="applyStyleSelectedBtn" type="button">Apply to selected feature</button>
+        <button id="applyStyleAllBtn" type="button">Apply to all features</button>
+      </section>
+
+      <section>
         <h2>Feature Attributes</h2>
         <form id="attributeForm">
-          <label>
-            Name
-            <input type="text" id="attrName" maxlength="100" />
-          </label>
-          <label>
-            Type
-            <input type="text" id="attrType" maxlength="100" />
-          </label>
-          <label>
-            Notes
-            <textarea id="attrNotes" rows="3" maxlength="500"></textarea>
-          </label>
+          <label>Name<input type="text" id="attrName" maxlength="100" /></label>
+          <label>Type<input type="text" id="attrType" maxlength="100" /></label>
+          <label>Notes<textarea id="attrNotes" rows="3" maxlength="500"></textarea></label>
           <button type="submit">Save attributes</button>
         </form>
         <p id="featureMeta" class="hint">Select a feature to edit attributes.</p>
@@ -67,20 +67,16 @@
         <h2>Import / Export</h2>
         <div class="import-export">
           <button id="exportBtn" type="button">Download GeoJSON</button>
-          <label class="file-input-label">
-            Import GeoJSON
+          <label class="file-input-label">Import GeoJSON
             <input id="importInput" type="file" accept=".geojson,.json,application/geo+json,application/json" />
           </label>
-          <label class="inline">
-            <input type="checkbox" id="mergeImport" /> Merge with existing
-          </label>
+          <label class="inline"><input type="checkbox" id="mergeImport" /> Merge with existing</label>
           <button id="clearBtn" type="button" class="danger">Clear all features</button>
         </div>
       </section>
     </aside>
 
     <div id="map" aria-label="Map"></div>
-
     <div id="statusBar" class="status-bar">Mode: Sketch | GPS: inactive</div>
   </div>
 
