@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leaflet Field Mapper</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <aside id="toolbar" class="toolbar collapsed">
+      <h1>Field Mapper</h1>
+
+      <section>
+        <h2>Basemap</h2>
+        <label for="basemapSelect" class="sr-only">Basemap selector</label>
+        <select id="basemapSelect"></select>
+      </section>
+
+      <section>
+        <h2>Sketching</h2>
+        <p class="hint">Use map draw controls (top-left) for point/line/polygon + edit/delete.</p>
+      </section>
+
+      <section>
+        <h2>Layer Styling</h2>
+        <label>Stroke color<input type="color" id="strokeColor" value="#0b57d0" /></label>
+        <label>Fill color<input type="color" id="fillColor" value="#4f8cff" /></label>
+        <label>Stroke width<input type="number" id="strokeWidth" min="1" max="12" step="1" value="3" /></label>
+        <label>Fill opacity<input type="number" id="fillOpacity" min="0" max="1" step="0.05" value="0.2" /></label>
+        <label>Point radius<input type="number" id="pointRadius" min="2" max="20" step="1" value="7" /></label>
+        <button id="applyStyleSelectedBtn" type="button">Apply to selected feature</button>
+        <button id="applyStyleAllBtn" type="button">Apply to all features</button>
+      </section>
+
+      <section>
+        <h2>Feature Attributes</h2>
+        <form id="attributeForm">
+          <label>Name<input type="text" id="attrName" maxlength="100" /></label>
+          <label>Type<input type="text" id="attrType" maxlength="100" /></label>
+          <label>Notes<textarea id="attrNotes" rows="3" maxlength="500"></textarea></label>
+          <button type="submit">Save attributes</button>
+        </form>
+        <p id="featureMeta" class="hint">Select a feature to edit attributes.</p>
+      </section>
+
+      <section>
+        <h2>GPS</h2>
+        <div class="gps-actions">
+          <button id="enableGpsBtn" type="button">Enable GPS</button>
+          <button id="addGpsPointBtn" type="button" disabled>Add GPS Point</button>
+          <button id="startLineBtn" type="button" disabled>Start Line Recording</button>
+          <button id="startPolygonBtn" type="button" disabled>Start Polygon Recording</button>
+          <button id="stopRecordingBtn" type="button" disabled>Stop Recording</button>
+        </div>
+        <div class="gps-settings">
+          <label>Min distance (m)<input type="number" id="minDistance" value="3" min="0" step="0.5" /></label>
+          <label>Min interval (s)<input type="number" id="minInterval" value="1" min="0" step="0.5" /></label>
+          <label>Max accuracy (m)<input type="number" id="maxAccuracy" value="25" min="1" step="1" /></label>
+        </div>
+        <p id="gpsStatus" class="hint">GPS inactive</p>
+      </section>
+
+      <section>
+        <h2>Import / Export</h2>
+        <div class="import-export">
+          <button id="exportBtn" type="button">Download GeoJSON</button>
+          <label class="file-input-label">Import GeoJSON
+            <input id="importInput" type="file" accept=".geojson,.json,application/geo+json,application/json" />
+          </label>
+          <label class="inline"><input type="checkbox" id="mergeImport" /> Merge with existing</label>
+          <button id="clearBtn" type="button" class="danger">Clear all features</button>
+        </div>
+      </section>
+    </aside>
+
+    <div id="map" aria-label="Map"></div>
+    <div id="statusBar" class="status-bar">Mode: Sketch | GPS: inactive</div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
