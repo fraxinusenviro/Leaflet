@@ -2,7 +2,7 @@
 
 A lightweight static Leaflet app for field mapping on desktop/mobile with:
 
-- Multiple basemaps (OSM, Esri Imagery, Esri Topo, Carto Positron)
+- Multiple basemaps (default **Esri Imagery**, plus OSM, Esri Topo, Carto Positron)
 - Sketch drawing/editing/deleting for points, lines, polygons
 - GPS capture (live position, add GPS point, line/polygon recording)
 - GeoJSON import/export
@@ -31,13 +31,16 @@ No build step is required; this is a static app.
 
 ## Feature behavior
 
+- Default map view is centered around Nova Scotia for quick regional startup.
 - Basemap choice is persisted in `localStorage`.
+- Tools toggle is in Leaflet controls (below zoom and above draw tools).
 - Draw/edit/delete events auto-save a GeoJSON `FeatureCollection` in `localStorage`.
 - Attributes editable per selected feature:
   - `name`
   - `type`
   - `notes`
-  - `timestamp` fields: `created_at` and `updated_at`
+  - timestamp fields: `created_at` and `updated_at`
+- Layer styling controls can apply stroke/fill/width/opacity/radius changes to selected features or all features.
 - GPS recording supports configurable min-distance, min-interval, and max-accuracy filters.
 - Line and polygon recordings create final features on stop (polygon requires >= 3 unique points and closes ring automatically).
 
